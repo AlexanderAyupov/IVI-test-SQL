@@ -1,0 +1,87 @@
+# 
+SELECT paid_type,cw.platform, COUNT(cw.platform)OVER(partition by paid_type) as num_users_paidtype, 
+FROM `ecstatic-valve-359011.test_assignment.Content` c
+JOIN `ecstatic-valve-359011.test_assignment.content_watch` cw
+ON c.content_id = cw.content_id
+WHERE cw.platform = 10 OR cw.platform = 11
+
+
+
+SELECT paid_type, show_date, utm_medium, (Select count(platform) from `ecstatic-valve-359011.test_assignment.content_watch` where platform = 11 group by platform) as platform_count
+FROM `ecstatic-valve-359011.test_assignment.Content` c
+FULL OUTER JOIN `ecstatic-valve-359011.test_assignment.content_watch` cw
+ON c.content_id = cw.content_id
+WHERE cw.platform = 11
+AND DATETIME_DIFF(PARSE_DATE('%d.%m.%Y', LEFT(show_date, 10)),'2018-10-30',DAY) < 31
+
+SELECT paid_type, show_date, utm_medium, (Select count(platform) from `ecstatic-valve-359011.test_assignment.content_watch` where platform = 10 group by platform) as platform_count
+FROM `ecstatic-valve-359011.test_assignment.Content` c
+FULL OUTER JOIN `ecstatic-valve-359011.test_assignment.content_watch` cw
+ON c.content_id = cw.content_id
+WHERE cw.platform = 10
+AND DATETIME_DIFF(PARSE_DATE('%d.%m.%Y', LEFT(show_date, 10)),'2018-10-30',DAY) < 31 #last 30 days
+
+#Top 5
+SELECT * 
+FROM `ecstatic-valve-359011.test_assignment.Content` c 
+FULL OUTER JOIN `ecstatic-valve-359011.test_assignment.content_watch` cw 
+ON c.content_id = cw.content_id
+Order by episode
+LIMIT 5
+
+
+SELECT * 
+FROM `ecstatic-valve-359011.test_assignment.Content` c 
+FULL OUTER JOIN `ecstatic-valve-359011.test_assignment.content_watch` cw 
+ON c.content_id = cw.content_id
+WHERE episode LIKE 'N%'
+Order by episode
+LIMIT 5
+
+SELECT * 
+FROM `ecstatic-valve-359011.test_assignment.Content` c 
+FULL OUTER JOIN `ecstatic-valve-359011.test_assignment.content_watch` cw 
+ON c.content_id = cw.content_id
+Order by episode
+LIMIT 5
+
+
+#OR WHERE CAST(PDATE AS DATE) >= GETDATE() -30
+ 
+SELECT user_id, count(user_id) over(partition by user_id), show_date, utm_medium
+FROM `ecstatic-valve-359011.test_assignment.Content` c 
+FULL OUTER JOIN `ecstatic-valve-359011.test_assignment.content_watch` cw 
+ON c.content_id = cw.content_id
+order by user_id
+
+SELECT user_id, show_date, DATE_ADD(PARSE_DATE('%d.%m.%Y', LEFT(show_date, 10)), INTERVAL 1 DAY) AS one_days_later
+FROM `ecstatic-valve-359011.test_assignment.Content` c 
+FULL OUTER JOIN `ecstatic-valve-359011.test_assignment.content_watch` cw 
+ON c.content_id = cw.content_id
+
+SELECT user_id, PARSE_DATE('%d.%m.%Y', LEFT(show_date, 10)) as new_date, DATE_ADD(PARSE_DATE('%d.%m.%Y', LEFT(show_date, 10)), INTERVAL 1 DAY) AS one_day_later, 
+PARSE_DATE('%d.%m.%Y', LEFT(show_date, 10)) - LAG(PARSE_DATE('%d.%m.%Y', LEFT(show_date, 10))) OVER (ORDER BY user_id) 
+FROM `ecstatic-valve-359011.test_assignment.Content` c 
+FULL OUTER JOIN `ecstatic-valve-359011.test_assignment.content_watch` cw 
+ON c.content_id = cw.content_id
+ORDER BY user_id
+
+
+SELECT user_id, new_date, DATE_ADD(PARSE_DATE('%d.%m.%Y', LEFT(show_date, 10)), INTERVAL 1 DAY) AS one_day_later, 
+PARSE_DATE('%d.%m.%Y', new_date) - LAG(PARSE_DATE('%d.%m.%Y', new_date)) OVER (ORDER BY user_id) 
+FROM `ecstatic-valve-359011.test_assignment.Content` c 
+FULL OUTER JOIN `ecstatic-valve-359011.test_assignment.content_watch` cw 
+ON c.content_id = cw.content_id
+ORDER BY user_id
+
+
+/* Recommender */
+Select DISTINCT cw.content_id, user_id, count(user_id) AS user_watched, AVG(movie_rating)over(partition by cw.content_id) as avg_rating
+FROM `ecstatic-valve-359011.test_assignment.Content` c 
+FULL OUTER JOIN `ecstatic-valve-359011.test_assignment.content_watch` cw 
+ON c.content_id = cw.content_id
+group by movie_rating, cw.content_id,cw.user_id
+Order by cw.content_id
+
+
+
